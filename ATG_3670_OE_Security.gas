@@ -1,0 +1,71 @@
+Program.Sub.ScreenSU.Start
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'Symcom Order Entry Group Security
+'Designed to work with hook 12705 in the Sales Order Lines - Long form
+
+'String to hold the GS user name.
+V.Local.NAME1.Declare(String)
+'SQL Query String
+V.Local.sSQL.Declare(String)
+'Recordset row string
+'V.Local.rGroup.Declare(String)
+'Recordset row array
+'V.Local.GroupArray.Declare(String)
+V.Local.temp.Declare(String)
+V.Local.bprice.Declare(Boolean)
+V.Local.bprice.Set(False)
+'User name trimmed of blank spaces
+F.Intrinsic.String.Trim(V.Caller.User,V.Local.NAME1)
+
+'Open Connection to Database to get Group Security Info
+F.ODBC.Connection!Connection1.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+'Query Database for Groups User can access
+F.Intrinsic.String.Concat("Select * From USER_GROUP Where USER_ID='",V.Caller.User,"'AND COMPANY='",V.Caller.CompanyCode,"'",V.Local.sSQL)
+F.ODBC.Connection!Connection1.OpenRecordsetRO("r",V.Local.sSQL)
+
+'Loop through Recordset for security groups
+F.Intrinsic.Control.DoUntil(V.Odbc.Connection1!r.EOF,=,True)
+
+	
+	F.Intrinsic.Control.If(V.Odbc.Connection1!r.FieldValRTrim!GROUP_ID,=,"PRICING")
+		V.Local.bprice.Set(True)
+	F.Intrinsic.Control.EndIf
+
+
+	'Move to next recordset
+	F.ODBC.Connection1!r.MoveNext
+F.Intrinsic.Control.Loop
+
+F.Intrinsic.Control.If(V.Local.bprice,=,False)
+	F.Intrinsic.Control.CallSub(Hide)
+F.Intrinsic.Control.EndIf
+
+F.ODBC.Connection!Connection1.Close
+F.Intrinsic.Control.End
+
+Program.Sub.Main.End
+
+Program.Sub.Hide.Start
+'F.Intrinsic.Debug.ShowCallerInfo
+
+
+'Lock Price Field
+F.Intrinsic.UI.ChangeCallerProperty(Variable.Passed.000009,"LOCK",1)
+
+F.Intrinsic.UI.ChangeCallerProperty(Variable.Passed.000119,"LOCK",1)
+F.Intrinsic.UI.ChangeCallerProperty(Variable.Passed.000120,"LOCK",1)
+F.Intrinsic.UI.ChangeCallerProperty(Variable.Passed.000121,"LOCK",1)
+
+'Return to Main
+F.Intrinsic.Control.ExitSub
+
+
+Program.Sub.Hide.End
+
+
